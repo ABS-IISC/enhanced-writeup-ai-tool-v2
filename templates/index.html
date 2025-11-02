@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Writeup Automation AI Tool</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            padding: 15px 20px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .header h1 {
+            color: #3498db;
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            color: #bdc3c7;
+            font-size: 0.9rem;
+        }
+        
+        .main-container {
+            display: flex;
+            height: calc(100vh - 80px);
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: #2c3e50;
+            border-right: 2px solid #34495e;
+            overflow-y: auto;
+        }
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .top-stats {
+            background: #34495e;
+            padding: 15px 20px;
+            border-bottom: 1px solid #4a5f7a;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+        }
+        
+        .stat-card {
+            background: #2c3e50;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .stat-card:hover {
+            border-color: #3498db;
+            transform: translateY(-2px);
+        }
+        
+        .stat-card.clickable:hover {
+            background: #34495e;
+        }
+        
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: #bdc3c7;
+            text-transform: uppercase;
+        }
+        
+        .stat-card.high-risk .stat-number { color: #e74c3c; }
+        .stat-card.medium-risk .stat-number { color: #f39c12; }
+        .stat-card.low-risk .stat-number { color: #27ae60; }
+        .stat-card.total .stat-number { color: #3498db; }
+        .stat-card.feedback .stat-number { color: #9b59b6; }
+        
+        .view-controls {
+            background: #34495e;
+            padding: 10px 20px;
+            border-bottom: 1px solid #4a5f7a;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .view-btn {
+            background: #2c3e50;
+            color: #bdc3c7;
+            border: 1px solid #4a5f7a;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .view-btn.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .view-btn:hover:not(.active) {
+            background: #34495e;
+            border-color: #3498db;
+        }
+        
+        .main-view {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .document-panel, .analysis-panel {
+            flex: 1;
+            background: #1a1a1a;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .document-panel {
+            border-right: 2px solid #34495e;
+        }
+        
+        .panel-header {
+            background: #2c3e50;
+            padding: 12px 16px;
+            margin: -20px -20px 20px -20px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .panel-title {
+            color: #3498db;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .section-content {
+            background: #2c3e50;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .feedback-item {
+            background: #2c3e50;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .feedback-item.high-risk { border-left-color: #e74c3c; }
+        .feedback-item.medium-risk { border-left-color: #f39c12; }
+        .feedback-item.low-risk { border-left-color: #27ae60; }
+        .feedback-item.positive { border-left-color: #27ae60; }
+        
+        .feedback-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .feedback-type {
+            background: #34495e;
+            color: #3498db;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+        
+        .risk-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .risk-badge.high { background: #e74c3c; color: white; }
+        .risk-badge.medium { background: #f39c12; color: white; }
+        .risk-badge.low { background: #27ae60; color: white; }
+        
+        .feedback-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover { transform: translateY(-1px); }
+        .btn:disabled { background: #7f8c8d; cursor: not-allowed; }
+        .btn.success { background: #27ae60; }
+        .btn.danger { background: #e74c3c; }
+        .btn.warning { background: #f39c12; }
+        
+        .sidebar-section {
+            padding: 20px;
+            border-bottom: 1px solid #34495e;
+        }
+        
+        .sidebar-title {
+            color: #3498db;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .upload-area {
+            border: 2px dashed #4a5f7a;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover {
+            border-color: #3498db;
+            background: rgba(52, 152, 219, 0.1);
+        }
+        
+        .upload-area.dragover {
+            border-color: #27ae60;
+            background: rgba(39, 174, 96, 0.1);
+        }
+        
+        .section-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .section-item {
+            background: #34495e;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .section-item:hover {
+            background: #4a5f7a;
+            border-left-color: #3498db;
+        }
+        
+        .section-item.active {
+            background: #3498db;
+            color: white;
+            border-left-color: #2980b9;
+        }
+        
+        .section-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .section-stats {
+            font-size: 0.8rem;
+            color: #bdc3c7;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .section-item.active .section-stats {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .progress-section {
+            padding: 15px 20px;
+            background: #2c3e50;
+            border-bottom: 1px solid #34495e;
+        }
+        
+        .progress-bar {
+            background: #34495e;
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-message {
+            font-size: 0.9rem;
+            color: #bdc3c7;
+            margin-top: 8px;
+        }
+        
+        .tabs-container {
+            background: #34495e;
+            border-bottom: 1px solid #4a5f7a;
+        }
+        
+        .tabs {
+            display: flex;
+            padding: 0 20px;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            color: #bdc3c7;
+        }
+        
+        .tab:hover {
+            background: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+        }
+        
+        .tab.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+            background: rgba(52, 152, 219, 0.1);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+            height: calc(100vh - 300px);
+            overflow-y: auto;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .chat-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: #2c3e50;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .chat-message {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+        
+        .chat-message.user {
+            background: #3498db;
+            color: white;
+            margin-left: auto;
+        }
+        
+        .chat-message.ai {
+            background: #34495e;
+            color: #e0e0e0;
+        }
+        
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #4a5f7a;
+            border-radius: 6px;
+            background: #2c3e50;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        
+        .chat-input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .logs-container {
+            height: 100%;
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 6px 8px;
+            border-radius: 4px;
+            border-left: 3px solid #3498db;
+        }
+        
+        .log-entry.INFO { border-left-color: #3498db; background: rgba(52, 152, 219, 0.1); }
+        .log-entry.SUCCESS { border-left-color: #27ae60; background: rgba(39, 174, 96, 0.1); }
+        .log-entry.ERROR { border-left-color: #e74c3c; background: rgba(231, 76, 60, 0.1); }
+        .log-entry.WARNING { border-left-color: #f39c12; background: rgba(243, 156, 18, 0.1); }
+        
+        .hidden { display: none !important; }
+        
+        .no-content {
+            text-align: center;
+            color: #7f8c8d;
+            padding: 40px 20px;
+        }
+        
+        @media (max-width: 1200px) {
+            .sidebar { width: 250px; }
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; }
+            .sidebar { width: 100%; height: 300px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Writeup Automation AI Tool</h1>
+        <p>Advanced Analysis | Split View | AI Chat | Risk Assessment | Export Options</p>
+    </div>
+    
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Document Upload</div>
+                <div class="upload-area" id="uploadArea">
+                    <p>📄 Drag & drop .docx file</p>
+                    <p style="font-size: 0.8rem; color: #7f8c8d;">or click to browse</p>
+                    <input type="file" id="fileInput" accept=".docx" style="display: none;">
+                </div>
+                
+                <div class="sidebar-title">Guidelines (Optional)</div>
+                <div class="upload-area" id="guidelinesArea">
+                    <p>📋 Upload guidelines</p>
+                    <input type="file" id="guidelinesInput" accept=".docx" style="display: none;">
+                </div>
+                
+                <button class="btn" id="startAnalysis" disabled>🔍 Start Analysis</button>
+                <button class="btn danger" id="stopAnalysis" disabled style="margin-left: 8px;">⏹️ Stop</button>
+            </div>
+            
+            <div class="progress-section" id="progressSection" style="display: none;">
+                <div class="sidebar-title">Analysis Progress</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-message" id="progressMessage">Ready to start...</div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title">Document Sections</div>
+                <div class="section-list" id="sectionsList">
+                    <div class="no-content">Upload a document to see sections</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <div class="top-stats">
+                <div class="stats-grid">
+                    <div class="stat-card total" id="totalSectionsCard">
+                        <div class="stat-number" id="totalSections">0</div>
+                        <div class="stat-label">Total Sections</div>
+                    </div>
+                    <div class="stat-card high-risk clickable" id="highRiskCard" onclick="filterByRisk('high')">
+                        <div class="stat-number" id="highRisk">0</div>
+                        <div class="stat-label">High Risk</div>
+                    </div>
+                    <div class="stat-card medium-risk clickable" id="mediumRiskCard" onclick="filterByRisk('medium')">
+                        <div class="stat-number" id="mediumRisk">0</div>
+                        <div class="stat-label">Medium Risk</div>
+                    </div>
+                    <div class="stat-card low-risk clickable" id="lowRiskCard" onclick="filterByRisk('low')">
+                        <div class="stat-number" id="lowRisk">0</div>
+                        <div class="stat-label">Low Risk</div>
+                    </div>
+                    <div class="stat-card feedback clickable" id="userFeedbackCard">
+                        <div class="stat-number" id="userFeedback">0</div>
+                        <div class="stat-label">User Feedback</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="view-controls">
+                <span style="color: #bdc3c7; margin-right: 10px;">View:</span>
+                <button class="view-btn active" id="splitViewBtn" onclick="setViewMode('split')">📊 Split View</button>
+                <button class="view-btn" id="originalViewBtn" onclick="setViewMode('original')">📄 Original Only</button>
+                <button class="view-btn" id="analysisViewBtn" onclick="setViewMode('analysis')">🔍 Analysis Only</button>
+            </div>
+            
+            <div class="main-view" id="mainView">
+                <div class="document-panel" id="documentPanel">
+                    <div class="panel-header">
+                        <div class="panel-title">📄 Original Document</div>
+                    </div>
+                    <div id="documentContent">
+                        <div class="no-content">
+                            <h3>No Section Selected</h3>
+                            <p>Select a section from the sidebar to view its content</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="analysis-panel" id="analysisPanel">
+                    <div class="tabs-container">
+                        <div class="tabs">
+                            <div class="tab active" data-tab="analysis">🔍 Analysis</div>
+                            <div class="tab" data-tab="chat">💬 Chat</div>
+                            <div class="tab" data-tab="logs">📋 Logs</div>
+                            <div class="tab" data-tab="feedback">📝 Feedback</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content active" id="analysisContent">
+                        <div class="no-content">
+                            <h3>AI Analysis</h3>
+                            <p>Start analysis to see AI-powered insights and recommendations</p>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="chatContent">
+                        <div class="chat-container">
+                            <div class="chat-messages" id="chatMessages">
+                                <div class="chat-message ai">
+                                    <strong>TARA AI:</strong> Hello! I'm your AI document analysis assistant. Upload a document and start analysis to unlock my full capabilities!
+                                </div>
+                            </div>
+                            <div class="chat-input-container">
+                                <input type="text" class="chat-input" id="chatInput" placeholder="Ask me about your document analysis...">
+                                <button class="btn" id="sendChatBtn">Send</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="logsContent">
+                        <div class="logs-container" id="logsContainer">
+                            <div class="log-entry INFO">
+                                <span>[INFO] Application initialized - Ready for document upload</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="feedbackContent">
+                        <div class="no-content">
+                            <h3>User Feedback</h3>
+                            <p>Add your own feedback and notes during the analysis process</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentSession = null;
+        let analysisInterval = null;
+        let currentSection = null;
+        let currentViewMode = 'split';
+        let currentRiskFilter = null;
+        
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEventListeners();
+            updateStatus();
+            setInterval(updateStatus, 2000);
+        });
+        
+        function initializeEventListeners() {
+            // File upload
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const guidelinesArea = document.getElementById('guidelinesArea');
+            const guidelinesInput = document.getElementById('guidelinesInput');
+            
+            uploadArea.addEventListener('click', () => fileInput.click());
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('drop', handleFileDrop);
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            guidelinesArea.addEventListener('click', () => guidelinesInput.click());
+            guidelinesInput.addEventListener('change', handleGuidelinesSelect);
+            
+            // Analysis controls
+            document.getElementById('startAnalysis').addEventListener('click', startAnalysis);
+            document.getElementById('stopAnalysis').addEventListener('click', stopAnalysis);
+            
+            // Tab navigation
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+            });
+            
+            // Chat
+            document.getElementById('sendChatBtn').addEventListener('click', sendChatMessage);
+            document.getElementById('chatInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') sendChatMessage();
+            });
+        }
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+        
+        function handleFileDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) uploadFile(files[0]);
+        }
+        
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) uploadFile(file);
+        }
+        
+        function handleGuidelinesSelect(e) {
+            const file = e.target.files[0];
+            if (file) uploadGuidelines(file);
+        }
+        
+        async function uploadFile(file) {
+            if (!file.name.endsWith('.docx')) {
+                alert('Please upload a .docx file');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentSession = result.session_id;
+                    updateUploadStatus(`✅ ${result.document_name} uploaded`);
+                    loadSections();
+                    document.getElementById('startAnalysis').disabled = false;
+                } else {
+                    alert('Upload failed: ' + result.error);
+                }
+            } catch (error) {
+                alert('Upload error: ' + error.message);
+            }
+        }
+        
+        async function uploadGuidelines(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/upload_guidelines', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateGuidelinesStatus(`✅ Guidelines uploaded`);
+                }
+            } catch (error) {
+                console.error('Guidelines upload error:', error);
+            }
+        }
+        
+        function updateUploadStatus(message) {
+            document.getElementById('uploadArea').innerHTML = `<p>${message}</p>`;
+        }
+        
+        function updateGuidelinesStatus(message) {
+            document.getElementById('guidelinesArea').innerHTML = `<p>${message}</p>`;
+        }
+        
+        async function loadSections() {
+            try {
+                const response = await fetch('/api/sections');
+                const result = await response.json();
+                
+                const container = document.getElementById('sectionsList');
+                container.innerHTML = '';
+                
+                result.sections.forEach(section => {
+                    const sectionDiv = document.createElement('div');
+                    sectionDiv.className = 'section-item';
+                    sectionDiv.innerHTML = `
+                        <div class="section-name">${section.name}</div>
+                        <div class="section-stats">
+                            <span>${section.word_count} words</span>
+                            <span>H:${section.high_risk_count} M:${section.medium_risk_count} L:${section.low_risk_count}</span>
+                        </div>
+                    `;
+                    sectionDiv.addEventListener('click', () => selectSection(section.name, sectionDiv));
+                    container.appendChild(sectionDiv);
+                });
+            } catch (error) {
+                console.error('Error loading sections:', error);
+            }
+        }
+        
+        async function selectSection(sectionName, element) {
+            document.querySelectorAll('.section-item').forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+            currentSection = sectionName;
+            
+            try {
+                const response = await fetch(`/api/section/${encodeURIComponent(sectionName)}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    displaySectionContent(result);
+                    displaySectionAnalysis(result);
+                }
+            } catch (error) {
+                console.error('Error loading section:', error);
+            }
+        }
+        
+        function displaySectionContent(sectionData) {
+            const content = document.getElementById('documentContent');
+            content.innerHTML = `
+                <div class="panel-header">
+                    <div class="panel-title">📄 ${sectionData.section_name}</div>
+                </div>
+                <div class="section-content">
+                    ${sectionData.content.replace(/\n/g, '<br>')}
+                </div>
+                <div style="margin-top: 15px; padding: 10px; background: #34495e; border-radius: 6px; font-size: 0.9rem;">
+                    <strong>Statistics:</strong> ${sectionData.word_count} words, ${sectionData.character_count} characters
+                </div>
+            `;
+        }
+        
+        function displaySectionAnalysis(sectionData) {
+            const content = document.getElementById('analysisContent');
+            const analysis = sectionData.analysis;
+            
+            if (!analysis || !analysis.feedback_items || analysis.feedback_items.length === 0) {
+                content.innerHTML = `
+                    <div class="no-content">
+                        <h3>No Analysis Available</h3>
+                        <p>Start analysis to see AI-powered insights for "${sectionData.section_name}"</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            analysis.feedback_items.forEach(item => {
+                const riskClass = item.risk_level ? item.risk_level.toLowerCase() : 'low';
+                html += `
+                    <div class="feedback-item ${riskClass}-risk">
+                        <div class="feedback-header">
+                            <span class="feedback-type">${item.type || 'Feedback'}</span>
+                            <span class="risk-badge ${riskClass}">${item.risk_level || 'Low'} Risk</span>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>${item.description || 'No description'}</strong>
+                        </div>
+                        ${item.suggestion ? `<div style="margin-bottom: 10px; color: #bdc3c7;"><strong>Suggestion:</strong> ${item.suggestion}</div>` : ''}
+                        ${item.example ? `<div style="margin-bottom: 10px; font-style: italic; color: #95a5a6;"><strong>Example:</strong> ${item.example}</div>` : ''}
+                        <div class="feedback-actions">
+                            <button class="btn success" onclick="acceptFeedback('${sectionData.section_name}', '${item.id}')">✅ Accept</button>
+                            <button class="btn danger" onclick="rejectFeedback('${sectionData.section_name}', '${item.id}')">❌ Reject</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            content.innerHTML = html;
+        }
+        
+        async function startAnalysis() {
+            try {
+                const response = await fetch('/api/start_analysis', { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('startAnalysis').disabled = true;
+                    document.getElementById('stopAnalysis').disabled = false;
+                    document.getElementById('progressSection').style.display = 'block';
+                } else {
+                    alert('Failed to start analysis: ' + result.error);
+                }
+            } catch (error) {
+                alert('Analysis start error: ' + error.message);
+            }
+        }
+        
+        async function stopAnalysis() {
+            try {
+                const response = await fetch('/api/stop_analysis', { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('startAnalysis').disabled = false;
+                    document.getElementById('stopAnalysis').disabled = true;
+                }
+            } catch (error) {
+                alert('Stop analysis error: ' + error.message);
+            }
+        }
+        
+        async function updateStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const status = await response.json();
+                
+                // Update progress
+                if (status.progress) {
+                    document.getElementById('progressFill').style.width = status.progress.progress + '%';
+                    document.getElementById('progressMessage').textContent = status.progress.message;
+                }
+                
+                // Update statistics
+                if (status.statistics) {
+                    document.getElementById('totalSections').textContent = status.statistics.total_sections;
+                    document.getElementById('highRisk').textContent = status.statistics.high_risk;
+                    document.getElementById('mediumRisk').textContent = status.statistics.medium_risk;
+                    document.getElementById('lowRisk').textContent = status.statistics.low_risk;
+                    document.getElementById('userFeedback').textContent = status.statistics.user_feedback;
+                }
+                
+                // Update logs
+                if (status.logs) {
+                    updateLogs(status.logs);
+                }
+                
+                // Check if analysis is complete
+                if (status.analysis_complete) {
+                    document.getElementById('startAnalysis').disabled = false;
+                    document.getElementById('stopAnalysis').disabled = true;
+                    loadSections(); // Refresh sections with new data
+                }
+                
+            } catch (error) {
+                console.error('Status update error:', error);
+            }
+        }
+        
+        function updateLogs(logs) {
+            const container = document.getElementById('logsContainer');
+            container.innerHTML = '';
+            
+            logs.forEach(log => {
+                const logDiv = document.createElement('div');
+                logDiv.className = `log-entry ${log.level}`;
+                const timestamp = new Date(log.timestamp).toLocaleTimeString();
+                logDiv.innerHTML = `<span>[${timestamp}] ${log.level}: ${log.message}</span>`;
+                container.appendChild(logDiv);
+            });
+            
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            addChatMessage('user', message);
+            input.value = '';
+            
+            try {
+                const response = await fetch('/api/chat/basic', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    addChatMessage('ai', result.response);
+                } else {
+                    addChatMessage('ai', 'Sorry, I encountered an error processing your message.');
+                }
+            } catch (error) {
+                addChatMessage('ai', 'Sorry, I\'m having trouble connecting right now.');
+            }
+        }
+        
+        function addChatMessage(sender, message) {
+            const container = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${sender}`;
+            
+            const senderName = sender === 'user' ? 'You' : 'TARA AI';
+            messageDiv.innerHTML = `<strong>${senderName}:</strong> ${message.replace(/\n/g, '<br>')}`;
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName + 'Content').classList.add('active');
+        }
+        
+        function setViewMode(mode) {
+            currentViewMode = mode;
+            
+            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(mode + 'ViewBtn').classList.add('active');
+            
+            const documentPanel = document.getElementById('documentPanel');
+            const analysisPanel = document.getElementById('analysisPanel');
+            
+            switch(mode) {
+                case 'split':
+                    documentPanel.style.display = 'block';
+                    analysisPanel.style.display = 'block';
+                    break;
+                case 'original':
+                    documentPanel.style.display = 'block';
+                    analysisPanel.style.display = 'none';
+                    break;
+                case 'analysis':
+                    documentPanel.style.display = 'none';
+                    analysisPanel.style.display = 'block';
+                    break;
+            }
+        }
+        
+        function filterByRisk(riskLevel) {
+            currentRiskFilter = riskLevel;
+            // This would filter the displayed feedback items by risk level
+            console.log('Filtering by risk level:', riskLevel);
+        }
+        
+        async function acceptFeedback(section, feedbackId) {
+            try {
+                const response = await fetch('/api/feedback/accept', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ section: section, feedback_id: feedbackId })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (currentSection === section) {
+                        selectSection(section, document.querySelector('.section-item.active'));
+                    }
+                    loadSections(); // Refresh section stats
+                } else {
+                    alert('Failed to accept feedback: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error accepting feedback: ' + error.message);
+            }
+        }
+        
+        async function rejectFeedback(section, feedbackId) {
+            try {
+                const response = await fetch('/api/feedback/reject', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ section: section, feedback_id: feedbackId })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (currentSection === section) {
+                        selectSection(section, document.querySelector('.section-item.active'));
+                    }
+                    loadSections(); // Refresh section stats
+                } else {
+                    alert('Failed to reject feedback: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error rejecting feedback: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

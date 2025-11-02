@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: writeup-ai-tool-v2
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python render_deploy.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.18
+      - key: PORT
+        value: 10000

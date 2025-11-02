@@ -1,1 +1,1 @@
-web: python heroku_deploy.py
+web: python production_app.py

@@ -376,16 +376,42 @@ def basic_chat():
 # Health check endpoint for deployment platforms
 @app.route('/health')
 def health_check():
-    return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
+    return jsonify({
+        'status': 'healthy', 
+        'timestamp': datetime.now().isoformat(),
+        'port': os.environ.get('PORT', '5005'),
+        'host': '0.0.0.0'
+    })
+
+# Railway root endpoint
+@app.route('/ping')
+def ping():
+    return 'pong'
+
+# Railway startup check
+@app.before_first_request
+def startup():
+    print(f"App started successfully on port {os.environ.get('PORT', '5005')}")
+    print(f"Health check: /health")
+    print(f"Main app: /")
 
 if __name__ == '__main__':
     print("Universal Writeup Automation AI Tool")
     print("Compatible with: Localhost, Railway, Ngrok, Heroku, and more")
     print("=" * 50)
     
-    # Universal port detection
-    port = int(os.environ.get('PORT', os.environ.get('port', 5005)))
-    host = '0.0.0.0'  # Works on all platforms
+    # Railway-specific port detection
+    port = int(os.environ.get('PORT', 5005))
+    host = '0.0.0.0'
     
     print(f"Starting server on {host}:{port}")
-    app.run(debug=False, host=host, port=port)
+    print(f"Health check available at: http://{host}:{port}/health")
+    
+    # Railway-optimized configuration
+    app.run(
+        debug=False, 
+        host=host, 
+        port=port,
+        threaded=True,
+        use_reloader=False
+    )

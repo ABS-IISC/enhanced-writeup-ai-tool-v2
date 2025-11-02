@@ -2,7 +2,10 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "gunicorn --bind 0.0.0.0:$PORT universal_app:app"
+startCommand = "gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 120 universal_app:app"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
+
+[variables]
+PORT = "$PORT"

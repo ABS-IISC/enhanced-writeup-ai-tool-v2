@@ -401,7 +401,7 @@ if __name__ == '__main__':
     print("=" * 50)
     
     # Railway-specific port detection
-    port = int(os.environ.get('PORT', 5005))
+    port = int(os.environ.get('PORT', 5005,8080))
     host = '0.0.0.0'
     
     print(f"Starting server on {host}:{port}")
@@ -414,4 +414,5 @@ if __name__ == '__main__':
         port=port,
         threaded=True,
         use_reloader=False
+        
     )
